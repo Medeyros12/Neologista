@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neologista</title>
+    <style>
+        /* General page styling and reset */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Main container styling */
+        .container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-size: 1.8rem;
+        }
+
+        /* Generated word display */
+        .word-display {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #3498db;
+            margin-bottom: 20px;
+            word-wrap: break-word;
+            letter-spacing: 1px;
+        }
+
+        /* Morphemes breakdown section */
+        .breakdown {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 20px;
+            border-radius: 4px;
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        .morpheme {
+            font-size: 1.1rem;
+        }
+
+        .morpheme a {
+            color: #e74c3c;
+            text-decoration: none;
+            font-weight: bold;
+            border-bottom: 1px dotted #e74c3c;
+        }
+
+        .morpheme a:hover {
+            color: #c0392b;
+            border-bottom: 1px solid #c0392b;
+        }
+
+        .meaning {
+            font-style: italic;
+            color: #7f8c8d;
+            font-size: 0.95rem;
+            margin-top: 5px;
+        }
+
+        /* Combined meaning section */
+        .final-meaning {
+            background-color: #e8f6f3;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+            color: #16a085;
+            border: 1px solid #d1f2eb;
+        }
+
+        /* Action buttons */
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .btn-generate {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .btn-generate:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-copy {
+            background-color: #95a5a6;
+            color: white;
+        }
+
+        .btn-copy:hover {
+            background-color: #7f8c8d;
+        }
+
+        /* Responsive design */
+        @media (max-width: 480px) {
+            .word-display {
+                font-size: 2.2rem;
+            }
+            .controls {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Neologista</h1>
+        <h2>Gerador de Palavras Aleatórias</h2>
+        
+        <div class="word-display" id="resultWord">...</div>
+        
+        <div class="final-meaning" id="resultMeaning">
+            Clique em "Gerar Nova Palavra" para começar.
+        </div>
+
+        <div class="breakdown">
+            <div class="morpheme">
+                <strong>Prefixo:</strong> <a href="#" id="prefixLink" target="_blank">...</a>
+                <div class="meaning" id="prefixMeaning">...</div>
+            </div>
+            <div class="morpheme">
+                <strong>Sufixo:</strong> <a href="#" id="suffixLink" target="_blank">...</a>
+                <div class="meaning" id="suffixMeaning">...</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn-generate" onclick="generateWord()">Gerar Nova Palavra</button>
+            <button class="btn-copy" id="copyBtn" onclick="copyWord()">Copiar Palavra</button>
+        </div>
+    </div>
+
+    <script>
+        // Database of prefixes sourced from Wiktionary
+        const prefixes = [
+        		{ text: "a-", meaning: "afastamento, distanciamento, aproximação, aumento, mudança de estado, negação, privação" },
+        		{ text: "afro-", meaning: "africano" },
+        		{ text: "agro-", meaning: "campo, solo, agricultura" },
+        		{ text: "anti-", meaning: "hostilidade, proteção, oposição" },
+            { text: "auto-", meaning: "de si mesmo, por si próprio" },
+            { text: "bi-", meaning: "dois, duplo, duas vezes" },
+            { text: "biblio-", meaning: "livro" },
+            { text: "bio-", meaning: "vida" },
+            { text: "brasilo-", meaning: "brasileiro" },
+            { text: "ciber-", meaning: "rede, internet" },
+            { text: "cis-", meaning: "de cá, aquém" },
+            { text: "cito-", meaning: "célula" },
+            { text: "crono-", meaning: "tempo" },
+            { text: "demo-", meaning: "povo, população" },
+            { text: "des-", meaning: "separação, afastamento, ablação, ação contrária, de cima para baixo, intensidade, reforço" },
+            { text: "eco-", meaning: "casa, habitat, meio ambiente" },
+            { text: "ego-", meaning: "eu, cabra" },
+            { text: "eletro-", meaning: "eletricidade" },
+            { text: "endo-", meaning: "dentro, interior" },
+            { text: "etno-", meaning: "raça, nação, povo" },
+            { text: "euro-", meaning: "europeu" },
+            { text: "ex-", meaning: "movimento para fora" },
+            { text: "exo-", meaning: "fora, exterior" },
+            { text: "filo-", meaning: "amigo, partidário, apoiador" },
+            { text: "fito-", meaning: "planta, vegetal" },
+            { text: "foto-", meaning: "luz" },
+            { text: "geno-", meaning: "origem" },
+            { text: "geo-", meaning: "terra" },
+            { text: "germano-", meaning: "germânico, alemão" },
+            { text: "greco-", meaning: "grego" },
+            { text: "helio-", meaning: "sol" },
+            { text: "hemi-", meaning: "meio, metade" },
+            { text: "hetero-", meaning: "diferente" },
+            { text: "hidro-", meaning: "água" },
+            { text: "hiper-", meaning: "muito, excessivo, para além de" },
+            { text: "homo-", meaning: "igual" },
+            { text: "indo-", meaning: "indiano" },
+            { text: "infra-", meaning: "abaixo, sob, inferior, base" },
+            { text: "inter-", meaning: "entre, reciprocidade, mutualidade" },
+            { text: "israelo-", meaning: "israel" },
+            { text: "italo-", meaning: "italiano" },
+            { text: "luso-", meaning: "português" },
+            { text: "macro-", meaning: "grande, longo" },
+            { text: "meta-", meaning: "mudança, união, transformação, nível superior, que fala sobre o próprio conceito" },
+            { text: "micro-", meaning: "pequeno" },
+            { text: "mono-", meaning: "único, um, só, isolado" },
+            { text: "narco-", meaning: "droga, tráfico de drogas" },
+            { text: "necro-", meaning: "morte, cadáver" },
+            { text: "neo-", meaning: "novo, recente" },
+            { text: "neuro-", meaning: "sistema nervoso" },
+            { text: "nipo-", meaning: "japonês" },
+            { text: "odonto-", meaning: "dente" },
+            { text: "omni-", meaning: "tudo" },
+            { text: "orto-", meaning: "correto, reto, preciso" },
+            { text: "paleo-", meaning: "antigo" },
+            { text: "pan-", meaning: "tudo, todos" },
+            { text: "para-", meaning: "ao lado, próximo, transcendente, anomal" },
+            { text: "pluri-", meaning: "muitos, vários" },
+            { text: "poli-", meaning: "muitos, vários" },
+            { text: "porno-", meaning: "imoral, obsceno" },
+            { text: "pre-", meaning: "antes" },
+            { text: "proto-", meaning: "primeiro" },
+            { text: "pseudo-", meaning: "falso" },
+            { text: "re-", meaning: "repetição" },
+            { text: "retro-", meaning: "para trás, anterior" },
+            { text: "semi-", meaning: "meio, metade, quase" },
+            { text: "sobre-", meaning: "acima, demais, além de" },
+            { text: "sub-", meaning: "abaixo, inferior, falta" },
+            { text: "super-", meaning: "superior" },
+            { text: "tauro-", meaning: "touro" },
+            { text: "tele-", meaning: "longe, à distância" },
+            { text: "teo-", meaning: "divindade" },
+            { text: "termo-", meaning: "temperatura, calor" },
+            { text: "trans-", meaning: "além de, atravé, travessia, mudança" },
+            { text: "ultra-", meaning: "acima, sobre, superior" },
+            { text: "xeno-", meaning: "estrangeiro, estranho" },
+            { text: "zoo-", meaning: "animal" }
+        ];
+
+        // Database of suffixes sourced from Wiktionary
+        const suffixes = [
+        		{ text: "-aço", meaning: "indicador de intensidade" },
+        		{ text: "-algia", meaning: "dor ocorrente na área indicada pelo primeiro elemento" },
+        		{ text: "-ança", meaning: "ação, estado, qualidade" },
+        		{ text: "-ão", meaning: "aumentativo, origem" },
+        		{ text: "-arquia", meaning: "governo, forma de governo, autoridade, área governada por" },
+        		{ text: "-bio", meaning: "vida" },
+        		{ text: "-bol", meaning: "esporte com bola" },
+        		{ text: "-caína", meaning: "alcaloide anestésico sinteticamente produzido" },
+        		{ text: "-cida", meaning: "matador" },
+        		{ text: "-cídio", meaning: "extermínio" },
+            { text: "-cracia", meaning: "poder, autoridade, governo" },
+            { text: "-cultor", meaning: "cultivador" },
+            { text: "-cultura", meaning: "cultivo" },
+            { text: "-cêntrico", meaning: "foco, centro de atenção" },
+            { text: "-douro", meaning: "pentencialidade, utensílio" },
+            { text: "-edo", meaning: "grupo, coletividade, ou lugar onde abunda o substantivo raiz" },
+            { text: "-eiro", meaning: "ofício, onde se guarda algo, ávore ou arbusto, coletivo, local de origem" },
+            { text: "-emia", meaning: "sangue" },
+            { text: "-ente", meaning: "agente" },
+            { text: "-ento", meaning: "formador de adjetivos a partir de verbos ou substantivos" },
+            { text: "-fago", meaning: "que se alimenta de" },
+            { text: "-filia", meaning: "amizade, afinidade, atração" },
+            { text: "-filo", meaning: "amigo, partidário, tribo, raça" },
+            { text: "-fobia", meaning: "medo, aversão, repulsa" },
+            { text: "-fone", meaning: "som" },
+            { text: "-fono", meaning: "som, falante de um idioma" },
+            { text: "-forme", meaning: "com forma de, semelhante a" },
+            { text: "-gamia", meaning: "casamento" },
+            { text: "-geno", meaning: "origem" },
+            { text: "-grafia", meaning: "escrita" },
+            { text: "-grafo", meaning: "descritor" },
+            { text: "-iano", meaning: "relativo a, próprio de" },
+            { text: "-ino", meaning: "origem" },
+            { text: "-ismo", meaning: "sistema político, religião, doença, esporte, ideologia" },
+            { text: "-íssimo", meaning: "superlativo" },
+            { text: "-ista", meaning: "que segue um princípio, estudioso ou profissional de um assunto, que usa algo, que tem visão preconceituosa" },
+            { text: "-istão", meaning: "país, território" },
+            { text: "-lândia", meaning: "país, território" },
+            { text: "-latra", meaning: "adorador" },
+            { text: "-latria", meaning: "adoração" },
+            { text: "-lise", meaning: "quebra, dissolução, destruição" },
+            { text: "-logia", meaning: "estudo, ciência, discurso" },
+            { text: "-logia", meaning: "membro de uma profissão" },
+            { text: "-logo", meaning: "membro de uma profissão" },
+            { text: "-mancia", meaning: "adivinhação, magia" },
+            { text: "-mania", meaning: "compulsão, obsessão" },
+            { text: "-metria", meaning: "medida, medição" },
+            { text: "-metro", meaning: "medidor" },
+            { text: "-oide", meaning: "com formato de, semelhante a, grupo de" },
+            { text: "-orama", meaning: "espetáculo" },
+            { text: "-patia", meaning: "doença, afecção, sentimento" },
+            { text: "-ptero", meaning: "asa" },
+            { text: "-reia", meaning: "fluxo" },
+            { text: "-sfera", meaning: "esfera" },
+            { text: "-teca", meaning: "coleção, povo meso-americano" },
+            { text: "-terapia", meaning: "cura, tratamento" },
+            { text: "-tério", meaning: "mamífero, besta, lugar onde" },
+            { text: "-scopia", meaning: "ato de ver, examinar, observar" }
+        ];
+
+        // Helper function to pick a random element from an array
+        function getRandomElement(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        // Main function to generate and display the word
+        function generateWord() {
+            const prefix = getRandomElement(prefixes);
+            const suffix = getRandomElement(suffixes);
+
+            // Clean hyphens to form the combined word
+            const cleanPrefix = prefix.text.replace('-', '');
+            const cleanSuffix = suffix.text.replace('-', '');
+            const combinedWord = cleanPrefix + cleanSuffix;
+
+            // Update the combined word display
+            document.getElementById('resultWord').innerText = combinedWord.charAt(0).toUpperCase() + combinedWord.slice(1);
+
+            // Update combined meaning based on literal morpheme combination
+            const combinedMeaning = `${suffix.meaning} relacionado(a) a ${prefix.meaning}`;
+            document.getElementById('resultMeaning').innerHTML = `<strong>Significado literal:</strong> ${combinedMeaning}`;
+
+            // Update Prefix info and Wiktionary link
+            const prefixEl = document.getElementById('prefixLink');
+            prefixEl.innerText = prefix.text;
+            prefixEl.href = `https://pt.wiktionary.org/wiki/${prefix.text}`;
+            document.getElementById('prefixMeaning').innerText = `Significado: ${prefix.meaning}`;
+
+            // Update Suffix info and Wiktionary link
+            const suffixEl = document.getElementById('suffixLink');
+            suffixEl.innerText = suffix.text;
+            suffixEl.href = `https://pt.wiktionary.org/wiki/${suffix.text}`;
+            document.getElementById('suffixMeaning').innerText = `Significado: ${suffix.meaning}`;
+            
+            // Reset copy button text if it was changed
+            document.getElementById('copyBtn').innerText = "Copiar Palavra";
+        }
+
+        // Function to copy the generated word to clipboard
+        function copyWord() {
+            const word = document.getElementById('resultWord').innerText;
+            if (word === "...") return; // Do nothing if no word is generated yet
+
+            navigator.clipboard.writeText(word).then(() => {
+                const btn = document.getElementById('copyBtn');
+                btn.innerText = "Copiado!";
+                
+                // Reset button text after 2 seconds
+                setTimeout(() => {
+                    if(btn.innerText === "Copiado!") {
+                        btn.innerText = "Copiar Palavra";
+                    }
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+                alert("Erro ao copiar a palavra.");
+            });
+        }
+
+        // Generate an initial word when the page loads
+        window.onload = generateWord;
+    </script>
+</body>
+</html>
